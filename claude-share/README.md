@@ -68,7 +68,9 @@ services:
       - APPJWTSECRETKEY=                          #子应用JWT token密钥  （条件必填：对接ucenter、ucenter-lite、自定义OAuth2.0时必填，且需与授权服务JWT密钥一致）
       - AUDIT_LIMIT_URL=                          #自定义审核限流接口地址 （选填，填写之后，请自行实现审核限流服务，系统不再使用内置审核限流模式，config.yaml中内容审核、模型速率限制配置以及外挂敏感词文件keywords.txt失效）
       - APIAUTH=                                  #adminapi接口鉴权秘钥  (选填，如果需要使用adminapi接口，请填写，并在调用接口时在 header 中传递 apiauth 字段，值为 APIAUTH配置的值)
-      - PROHIBIT_MULTIPLE_LOGIN=                  #禁止同一个用户token在多个地方登录
+      - PROHIBIT_MULTIPLE_LOGIN=                  #禁止同一个用户token在多个地方登录（布尔值，不填默认false）
+      - PROHIBIT_CONCURRENT_REQUEST=              #是否禁止并发请求（布尔值，不填默认false）
+      - ConversationNotifyUrl=                    #会话成功回调地址（选填，填写之后，请自行实现回调接口）
     volumes:
       - ./backend/manifest:/app/manifest
       - ./config/config.yaml:/app/config.yaml   #config.yaml配置文件
@@ -129,6 +131,13 @@ services:
   - 具体使用即在 header 中传递 apiauth 字段，值为 APIAUTH，即可访问
 - PROHIBIT_MULTIPLE_LOGIN
   - 禁止同一个用户token在多个地方登录，禁止：true，不禁止：false
+- PROHIBIT_CONCURRENT_REQUEST
+  - 禁止同一用户并发请求，禁止：true，不禁止：false
+- ConversationNotifyUrl
+  - 会话成功回调接口地址
+  - 对接方式请查看本文档：会话成功回调接口对接
+  - 例如：
+    - `ConversationNotifyUrl=https://yourdomain/conversation/notify`
 
 #### config.yaml配置文件              
 
@@ -435,6 +444,31 @@ docker-compose restart
         }
       ```
     - 用户若对接自定义授权服务，请自行根据授权服务加密方式解密。若您的userToken无加密，则不必实现解密，可直接将userToken作为用户唯一标识，参与限流校验与会话隔离
+
+## 会话成功回调接口对接
+
+> 通过会话回调接口，您可以自行实现限制用户请求次数业务规则。
+
+  - 会话成功回调接口
+    - 接口地址：https://yourdomain/conversation/notify（需配置在docker-compose.yml系统变量：ConversationNotifyUrl），注意：此为会话成功回调接口地址
+    - 请求方式：post
+    - header参数：
+      - Authorization:           Bearer <accessToken>（从该头中提取token，去掉Bearer前缀后进行验签解析，以获取用户信息）
+      - Content-Type:            "application/json"（请求体类型）
+      - Cookie:                  会话请求Cookie（通常由浏览器或HTTP客户端自动携带）
+      - Referer:                 请求来源Referer（通常由浏览器自动携带）
+      - User-Agent:              客户端标识User-Agent（通常由浏览器或HTTP客户端自动携带）
+      - Carid:                   车辆id（车队名称，自定义header，请按实际车队透传）
+      - Model:                   请求模型
+
+      > **说明**: 
+              如授权服务对接ucenter、ucenter-lite、或自定义OAuth2.0服务，Authorization中的<accessToken>为用户名
+              如授权服务对接自定义授权服务，则<accessToken>为登录的userToken
+              除 `Authorization` 、`Carid`、`Model` 外，其余header通常由浏览器或HTTP客户端自动携带，服务端按需读取即可。
+    - body参数：
+      - claude会话请求body，用户可根据需要自行解析数据
+    - 请求响应：
+      - 响应http状态码为200
 
 
 ## 使用
