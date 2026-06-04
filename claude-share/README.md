@@ -70,7 +70,7 @@ services:
       - APIAUTH=                                  #adminapi接口鉴权秘钥  (选填，如果需要使用adminapi接口，请填写，并在调用接口时在 header 中传递 apiauth 字段，值为 APIAUTH配置的值)
       - PROHIBIT_MULTIPLE_LOGIN=                  #禁止同一个用户token在多个地方登录（布尔值，不填默认false）
       - PROHIBIT_CONCURRENT_REQUEST=              #是否禁止并发请求（布尔值，不填默认false）
-      - ConversationNotifyUrl=                    #会话成功回调地址（选填，填写之后，请自行实现回调接口）
+      - CONVERSATION_NOTIFY_URL=                    #会话成功回调地址（选填，填写之后，请自行实现回调接口）
     volumes:
       - ./backend/manifest:/app/manifest
       - ./config/config.yaml:/app/config.yaml   #config.yaml配置文件
@@ -133,11 +133,11 @@ services:
   - 禁止同一个用户token在多个地方登录，禁止：true，不禁止：false
 - PROHIBIT_CONCURRENT_REQUEST
   - 禁止同一用户并发请求，禁止：true，不禁止：false
-- ConversationNotifyUrl
+- CONVERSATION_NOTIFY_URL
   - 会话成功回调接口地址
   - 对接方式请查看本文档：会话成功回调接口对接
   - 例如：
-    - `ConversationNotifyUrl=https://yourdomain/conversation/notify`
+    - `CONVERSATION_NOTIFY_URL=https://yourdomain/conversation/notify`
 
 #### config.yaml配置文件              
 
@@ -450,7 +450,7 @@ docker-compose restart
 > 通过会话回调接口，您可以自行实现限制用户请求次数业务规则。
 
   - 会话成功回调接口
-    - 接口地址：https://yourdomain/conversation/notify（需配置在docker-compose.yml系统变量：ConversationNotifyUrl），注意：此为会话成功回调接口地址
+    - 接口地址：https://yourdomain/conversation/notify（需配置在docker-compose.yml系统变量：CONVERSATION_NOTIFY_URL），注意：此为会话成功回调接口地址
     - 请求方式：post
     - header参数：
       - Authorization:           Bearer <accessToken>（从该头中提取token，去掉Bearer前缀后进行验签解析，以获取用户信息）
