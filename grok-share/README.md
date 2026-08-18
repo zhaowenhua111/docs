@@ -323,18 +323,19 @@ docker-compose restart
       - Referer:                 请求来源Referer（通常由浏览器自动携带）
       - User-Agent:              客户端标识User-Agent（通常由浏览器或HTTP客户端自动携带）
       - Carid:                   车辆id（车队名称，自定义header，请按实际车队透传）
+      - Model:                   请求模型
 
-      > **说明**: 除 `Authorization` 和 `Carid` 外，其余header通常由浏览器或HTTP客户端自动携带，服务端按需读取即可。
+      > **说明**: 除 `Authorization` 和 `Carid` 、`Model`外，其余header通常由浏览器或HTTP客户端自动携带，服务端按需读取即可。
       
     - body参数：
       - grok会话请求body，请自行解析出会话模型以及会话内容，以便实现审核限流逻辑
 
-        > **提示**: 当前已知可参考字段：`modeId`（会话模型）、`message`（会话内容），grok官方可能随时调整字段名，请以实际请求报文为准
+        > **提示**: 当前已知可参考字段：`input_chunks`（会话内容），grok官方可能随时调整字段名，请以实际请求报文为准
 
     - 请求响应：
       - 审核通过：响应http状态码为200
-      - 触发模型速率限制：响应http状态码为429，提示信息格式请参照grok官方接口返回
-      - 触发内容审核限制：响应格式需与grok官方内容审核触发时的返回保持一致，请自行查阅grok官方文档确认（grok官方可能随时调整）
+      - 触发模型速率限制：响应http状态码为429，grok官方采用wss会话响应，此处返回429有grok-share自行返回限制消息
+      - 触发内容审核限制：响应http状态码为400，grok官方采用wss会话响应，此处返回400有grok-share自行返回限制消息
   - 接口代码示例（golang版本）
 
     > **注意**: 以下为逻辑结构示例，非完整可运行代码，`bannedWords` 和 `modelRate` 需替换为您实际的业务判断逻辑
@@ -355,8 +356,17 @@ docker-compose restart
           })
           return
         }
-        model := reqJson.Get("modeId").String()
-        prompt := reqJson.Get("message").String()
+        // 会话模型获取示例
+        model := r.Header.Get("Model")
+        g.Log().Debug(ctx, "model", model)
+        // 会话内容获取示例
+        inputChunks := reqJson.Get("event.item.x_grok.input_chunks").Array()
+        prompt := ""
+        for _, chunk := range inputChunks {
+          chunkJson := gjson.New(chunk)
+          prompt += chunkJson.Get("text.text").String()
+        }
+        g.Log().Debug(ctx, "prompt", prompt)
         // TODO 根据accessToken解析的用户信息、carid、model、prompt等参数自行实现审核限流判断
 
         bannedWords = true //触发违禁词,请实现判断逻辑
