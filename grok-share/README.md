@@ -325,7 +325,7 @@ docker-compose restart
       - Carid:                   车辆id（车队名称，自定义header，请按实际车队透传）
       - Model:                   请求模型
 
-      > **说明**: 除 `Authorization` 和 `Carid` 外，其余header通常由浏览器或HTTP客户端自动携带，服务端按需读取即可。
+      > **说明**: 除 `Authorization` 和 `Carid` 、`Model`外，其余header通常由浏览器或HTTP客户端自动携带，服务端按需读取即可。
       
     - body参数：
       - grok会话请求body，请自行解析出会话模型以及会话内容，以便实现审核限流逻辑
