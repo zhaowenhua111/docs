@@ -334,8 +334,8 @@ docker-compose restart
 
     - 请求响应：
       - 审核通过：响应http状态码为200
-      - 触发模型速率限制：响应http状态码为429，grok官方采用wss会话响应，此处返回429有grok-share自行返回限制消息
-      - 触发内容审核限制：响应http状态码为400，grok官方采用wss会话响应，此处返回400有grok-share自行返回限制消息
+      - 触发模型速率限制：响应http状态码为429，grok官方采用wss会话响应，此处返回429由grok-share自行返回限制消息
+      - 触发内容审核限制：响应http状态码为400，grok官方采用wss会话响应，此处返回400由grok-share自行返回限制消息
   - 接口代码示例（golang版本）
 
     > **注意**: 以下为逻辑结构示例，非完整可运行代码，`bannedWords` 和 `modelRate` 需替换为您实际的业务判断逻辑
